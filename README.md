@@ -380,6 +380,8 @@ const christmasVariables = getLiturgicalColorVariables(new Date('2024-12-25'));
 
 ### Framework Transformers
 
+All framework transformers take an optional `date` parameter and return theme objects ready for use with their respective frameworks.
+
 #### `getDocusaurusTheme(date?: Date): Record<string, string>`
 
 Returns Docusaurus-compatible theme object with `--ifm-*` variables.
@@ -514,20 +516,27 @@ The package automatically caches liturgical calendar data for better performance
 
 ### Docusaurus
 
-For Docusaurus sites, add the theme component to your layout:
+For Docusaurus sites, use the theme transformer:
 
 ```tsx
 // src/theme/Layout/index.tsx
-import { LiturgicalTheme } from '@codexcommunion/liturgical-theme';
+import { getDocusaurusTheme } from '@codexcommunion/liturgical-theme';
 import Layout from '@theme-original/Layout';
+import { useEffect } from 'react';
 
 export default function LayoutWrapper(props) {
-  return (
-    <>
-      <LiturgicalTheme options={{ includeDarkMode: true }} />
-      <Layout {...props} />
-    </>
-  );
+  useEffect(() => {
+    const theme = getDocusaurusTheme();
+    const css = Object.entries(theme)
+      .map(([key, value]) => `${key}: ${value};`)
+      .join(' ');
+    
+    const style = document.createElement('style');
+    style.innerHTML = `:root { ${css} }`;
+    document.head.appendChild(style);
+  }, []);
+
+  return <Layout {...props} />;
 }
 ```
 
@@ -535,19 +544,11 @@ export default function LayoutWrapper(props) {
 
 ```tsx
 import { MantineProvider } from '@mantine/core';
-import { generateMantineCSS, getCurrentLiturgicalInfo } from '@codexcommunion/liturgical-theme';
-
-const liturgicalInfo = getCurrentLiturgicalInfo();
-const css = generateMantineCSS(liturgicalInfo);
-
-// Inject CSS into document head
-const style = document.createElement('style');
-style.textContent = css;
-document.head.appendChild(style);
+import { getMantineTheme } from '@codexcommunion/liturgical-theme';
 
 function App() {
   return (
-    <MantineProvider>
+    <MantineProvider theme={getMantineTheme()}>
       {/* Your app content */}
     </MantineProvider>
   );
@@ -561,10 +562,12 @@ function App() {
 <style id="liturgical-theme"></style>
 
 <script>
-import { generateBootstrapCSS, getCurrentLiturgicalInfo } from '@codexcommunion/liturgical-theme';
+import { getBootstrapTheme } from '@codexcommunion/liturgical-theme';
 
-const liturgicalInfo = getCurrentLiturgicalInfo();
-const css = generateBootstrapCSS(liturgicalInfo);
+const theme = getBootstrapTheme();
+const css = Object.entries(theme)
+  .map(([key, value]) => `${key}: ${value};`)
+  .join(' ');
 document.getElementById('liturgical-theme').textContent = css;
 </script>
 ```
@@ -573,20 +576,11 @@ document.getElementById('liturgical-theme').textContent = css;
 
 ```javascript
 // tailwind.config.js
-const { getCurrentLiturgicalInfo, getLiturgicalColorScheme } = require('@codexcommunion/liturgical-theme');
-
-const liturgicalInfo = getCurrentLiturgicalInfo();
-const colorScheme = getLiturgicalColorScheme(liturgicalInfo.color);
+const { getTailwindTheme } = require('@codexcommunion/liturgical-theme');
 
 module.exports = {
   theme: {
-    extend: {
-      colors: {
-        'liturgical-primary': colorScheme.primary,
-        'liturgical-primary-dark': colorScheme.primaryDark,
-        // ... other colors
-      }
-    }
+    extend: getTailwindTheme()
   }
 }
 ```
@@ -596,21 +590,16 @@ module.exports = {
 ```tsx
 // pages/_app.tsx
 import { useEffect } from 'react';
-import { generateCSS, getCurrentLiturgicalInfo } from '@codexcommunion/liturgical-theme';
+import { getGenericCSSTheme } from '@codexcommunion/liturgical-theme';
 
 function MyApp({ Component, pageProps }) {
   useEffect(() => {
-    const liturgicalInfo = getCurrentLiturgicalInfo();
-    const css = generateCSS(liturgicalInfo, {
-      cssPrefix: '--liturgical',
-      includeDarkMode: true,
-      darkModeSelector: '[data-theme="dark"]'
-    });
+    const theme = getGenericCSSTheme();
+    const css = Object.entries(theme)
+      .map(([key, value]) => `${key}: ${value};`)
+      .join(' ');
     
-    const style = document.createElement('style');
-    style.id = 'liturgical-theme';
-    style.textContent = css;
-    document.head.appendChild(style);
+    document.documentElement.style.cssText += css;
   }, []);
 
   return <Component {...pageProps} />;
@@ -621,25 +610,26 @@ function MyApp({ Component, pageProps }) {
 
 ```javascript
 // Works with plain JavaScript - no React or TypeScript needed!
-const { getCurrentLiturgicalInfo, generateCSS } = require('@codexcommunion/liturgical-theme');
+const { getLiturgicalColorVariables, getGenericCSSTheme } = require('@codexcommunion/liturgical-theme');
 
-// Get liturgical information
-const liturgicalInfo = getCurrentLiturgicalInfo();
+// Get current liturgical colors
+const variables = getLiturgicalColorVariables();
+console.log('Available CSS variables:', variables);
 
-// Generate CSS
-const css = generateCSS(liturgicalInfo, {
-  cssPrefix: '--theme',
-  includeDarkMode: true,
-  darkModeSelector: '.dark-mode'
-});
+// Apply standardized theme to document
+const theme = getGenericCSSTheme();
+const css = Object.entries(theme)
+  .map(([key, value]) => `${key}: ${value};`)
+  .join(' ');
 
-// Apply to document
-const style = document.createElement('style');
-style.textContent = css;
-document.head.appendChild(style);
+document.documentElement.style.cssText += css;
 
-// Apply season classes to body
-document.body.classList.add(`liturgical-season-${liturgicalInfo.season}`);
+// Now use the standardized variables in your CSS - they work year-round!
+// .my-button { 
+//   background: var(--color-liturgical-500); 
+//   color: var(--color-liturgical-50);
+//   border: 1px solid var(--color-liturgical-600);
+// }
 ```
 
 ## Plain JavaScript Usage
@@ -650,47 +640,58 @@ The package works perfectly with plain JavaScript! Here's how:
 
 ```javascript
 // No TypeScript, no React needed!
-const { getCurrentLiturgicalInfo, generateCSS } = require('@codexcommunion/liturgical-theme');
+const { getLiturgicalColorVariables, getGenericCSSTheme } = require('@codexcommunion/liturgical-theme');
 
-// Get current liturgical information
-const liturgicalInfo = getCurrentLiturgicalInfo();
-console.log(liturgicalInfo);
-// { color: 'green', season: 'ordinary', celebration: 'Ordinary Time', rank: 'weekday' }
+// Get current liturgical color variables
+const variables = getLiturgicalColorVariables();
+console.log('Available CSS variables:', variables);
 
-// Generate CSS
-const css = generateCSS(liturgicalInfo);
+// Apply standardized theme to document
+const theme = getGenericCSSTheme();
+const css = Object.entries(theme)
+  .map(([key, value]) => `${key}: ${value};`)
+  .join(' ');
 
-// Apply to your webpage
-const style = document.createElement('style');
-style.textContent = css;
-document.head.appendChild(style);
+document.documentElement.style.cssText += css;
 ```
 
 ### Plain JS with Custom Options
 
 ```javascript
-const { generateCSS, getCurrentLiturgicalInfo } = require('@codexcommunion/liturgical-theme');
+const { getGenericCSSTheme, getTailwindTheme, getBootstrapTheme } = require('@codexcommunion/liturgical-theme');
 
-const liturgicalInfo = getCurrentLiturgicalInfo();
-const css = generateCSS(liturgicalInfo, {
-  cssPrefix: '--my-theme',
-  includeDarkMode: true,
-  darkModeSelector: '.dark-mode'
-});
+// Get theme for a specific date
+const specificDate = new Date('2024-12-25'); // Christmas
+const theme = getGenericCSSTheme(specificDate);
+const css = Object.entries(theme)
+  .map(([key, value]) => `${key}: ${value};`)
+  .join(' ');
 
 // Apply CSS
-document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
+document.head.insertAdjacentHTML('beforeend', `<style>:root { ${css} }</style>`);
+
+// Or use framework-specific transformers
+const tailwindTheme = getTailwindTheme(specificDate);
+const bootstrapTheme = getBootstrapTheme(specificDate);
 ```
 
 ### Framework-Specific Plain JS
 
 ```javascript
 // For Bootstrap (plain JS)
-const { generateBootstrapCSS, getCurrentLiturgicalInfo } = require('@codexcommunion/liturgical-theme');
+const { getBootstrapTheme } = require('@codexcommunion/liturgical-theme');
 
-const liturgicalInfo = getCurrentLiturgicalInfo();
-const css = generateBootstrapCSS(liturgicalInfo);
+const theme = getBootstrapTheme();
+const css = Object.entries(theme)
+  .map(([key, value]) => `${key}: ${value};`)
+  .join(' ');
 document.getElementById('liturgical-theme').textContent = css;
+
+// For Tailwind (plain JS)
+const { getTailwindTheme } = require('@codexcommunion/liturgical-theme');
+
+const tailwindTheme = getTailwindTheme();
+// Use tailwindTheme.colors.primary in your configuration
 ```
 
 ## Liturgical Colors
@@ -704,20 +705,6 @@ The package uses authentic Catholic CSS variables from the `catholic-css` packag
 - **Rose** (`--color-liturgical-rose-*`): Gaudete, Laetare Sundays
 - **Gold** (`--color-liturgical-gold-*`): Special Feasts
 
-## CSS Classes
-
-The package provides CSS classes for liturgical seasons:
-
-- `.liturgical-season-ordinary`
-- `.liturgical-season-advent`
-- `.liturgical-season-christmas`
-- `.liturgical-season-lent`
-- `.liturgical-season-easter`
-- `.liturgical-season-pentecost`
-- `.liturgical-season-gaudete`
-- `.liturgical-season-laetare`
-- `.liturgical-season-feast`
-
 ## Dependencies
 
 **Core Dependencies (always required):**
@@ -725,8 +712,6 @@ The package provides CSS classes for liturgical seasons:
 - `romcal`: Liturgical calendar calculations
 
 **Optional Dependencies:**
-- `react` (peer dependency): Only needed for React components (`<LiturgicalTheme>`, `<LiturgicalCard>`, etc.)
-- `react-dom` (peer dependency): Only needed for React components
 - `typescript`: Not required - just provides type definitions if you're using TypeScript
 
 **Note:** The core functions work with plain JavaScript and don't require React or TypeScript!
