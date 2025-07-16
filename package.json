@@ -1,6 +1,6 @@
 {
   "name": "@codexcommunion/liturgical-theme",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A lightweight, framework-agnostic liturgical theming package for Catholic websites, combining Catholic CSS variables with liturgical calendar calculations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
