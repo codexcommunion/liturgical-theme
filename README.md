@@ -437,7 +437,7 @@ This package uses the `romcal` library to determine liturgical colors based on t
 - **🟣 Purple (`liturgical-purple-*`)**: Advent, Lent
 - **⚪ White (`liturgical-white-*`)**: Christmas, Easter, major feasts
 - **🔴 Red (`liturgical-red-*`)**: Pentecost, martyrs, Palm Sunday
-- **🌹 Rose (`liturgical-rose-*`)**: Gaudete Sunday (3rd Sunday of Advent), Laetare Sunday (4th Sunday of Lent)
+- **🩷 Rose (`liturgical-rose-*`)**: Gaudete Sunday (3rd Sunday of Advent), Laetare Sunday (4th Sunday of Lent)
 - **🟡 Gold (`liturgical-gold-*`)**: Special celebrations (alternative to white)
 
 ### CSS Variables Available
@@ -471,7 +471,7 @@ npm install @codexcommunion/liturgical-theme catholic-css
 Then import the Catholic CSS variables:
 
 ```css
-@import 'catholic-css/dist/catholic-css.css';
+@import 'catholic-css/dist/catholic-palette.css';
 ```
 
 Now your CSS variables will have actual color values from the Catholic CSS palette.
@@ -745,7 +745,7 @@ The package provides CSS classes for liturgical seasons:
 
 #### CSS Variables Not Working
 - **Problem**: CSS variables are undefined
-- **Solution**: Make sure you've imported `catholic-css` CSS file: `@import 'catholic-css/dist/catholic-css.css'`
+- **Solution**: Make sure you've imported `catholic-css` CSS file: `@import 'catholic-css/dist/catholic-palette.css'`
 
 #### Romcal API Errors
 - **Problem**: Liturgical calendar data not loading
